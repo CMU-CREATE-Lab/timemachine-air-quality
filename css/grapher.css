@@ -1,0 +1,51 @@
+#grapher {
+  font-family: "Gill Sans Light", Verdana, Arial, sans-serif !important;
+  font-size: 10pt !important;
+  position: absolute;
+  left: 10px;
+  top: 515px;
+  width: 980px;
+}
+
+#dateAxisContainer {
+  width: 100%;
+  height: 39px;
+}
+
+#dateAxis {
+  position: absolute;
+  left: 100px;
+  right: 35px;
+  height: 37px;
+  border: 1px solid black;
+}
+
+.chart {
+  width: 100%;
+  height: 75px;
+  margin-top: -1px
+}
+
+.chartTitle {
+  position: absolute;
+  left: 0px;
+  width: 99px;
+  height: 73px;
+  border: 1px solid black;
+}
+
+.chartContent {
+  position: absolute;
+  left: 100px;
+  right: 35px;
+  height: 73px;
+  border: 1px solid black;
+}
+
+.chartAxis {
+  position: absolute;
+  right: 0px;
+  width: 34px;
+  height: 73px;
+  border: 1px solid black;
+}
