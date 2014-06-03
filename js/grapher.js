@@ -105,11 +105,16 @@ var dateAxis;
 window.grapherLoad = function() {
   $("#grapher").append('<div id="dateAxisContainer"><div id="dateAxis"></div></div>');
 
+  var currentDate = new Date();
+  var currentDate_millisecs = currentDate.getTime();
+  var minDate_millisecs = currentDate_millisecs - 2592000000;
+
   dateAxis = new DateAxis("dateAxis", "horizontal", {
-    min: 1398916800,
-    max: 1401595200
+    min: minDate_millisecs / 1000,
+    max: currentDate_millisecs / 1000
   });
 
+  // Add charts
   for (var i = 0; i < channels.length; i++) {
     var channel = channels[i];
     series[i] = {}
@@ -128,6 +133,7 @@ window.grapherLoad = function() {
       min: channel.min,
       max: channel.max
     });
+
     var datasource;
     (function(source) {
       datasource = function(level, offset, successCallback, failureCallback) {
@@ -143,6 +149,7 @@ window.grapherLoad = function() {
         });
       }
     })(channel.source);
+
     var plot = new DataSeriesPlot(datasource, dateAxis, series[i].axis, {});
     plot.setStyle({
       "styles": [{
@@ -172,13 +179,14 @@ window.grapherLoad = function() {
     });
     series[i].pc = new PlotContainer("series" + i, false, [plot]);
   }
+
   $(window).resize(setSizes);
   setSizes();
 };
 
 function setSizes() {
   dateAxis.setSize($('#dateAxis').width(), $("#dateAxis").height(), SequenceNumber.getNext());
-  for (var i = 0; channels.length; i++) {
+  for (var i = 0; i < channels.length; i++) {
     series[i].axis.setSize($('#series' + i + 'axis').width(), $('#series' + i + 'axis').height(), SequenceNumber.getNext());
     series[i].pc.setSize($('#series' + i).width(), $('#series' + i).height(), SequenceNumber.getNext());
   }
