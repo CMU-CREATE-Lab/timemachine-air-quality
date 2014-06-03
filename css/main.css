@@ -1,0 +1,31 @@
+#timeMachine {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 980px;
+  height: 492px;
+}
+
+#datepicker {
+  position: absolute;
+  top: 10px;
+  left: 1000px;
+  font-size: 10px;
+}
+
+#datepicker .ui-state-default {
+  background: white;
+}
+
+#datepicker .date-highlight a {
+  background: rgb(240, 240, 240);
+}
+
+#datepicker .ui-state-active {
+  border: 1px solid #000000;
+}
+
+.ui-datepicker-today a.ui-state-highlight {
+  border-color: #d3d3d3;
+  color: #555555;
+}

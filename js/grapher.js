@@ -1,78 +1,103 @@
+var color1 = "10,104,177";
+var color2 = "10,177,88";
+var color3 = "177,124,10";
+var color4 = "10,177,186";
 var channels = [{
   source: 'ACHD_Avalon.PM25B_UG_M3',
   label: 'Avalon PM2.5, ug/M^3',
-  min: 0,
-  max: 100
+  min: -20,
+  max: 120,
+  color: color1
 }, {
   source: 'ACHD_Lawrenceville.PM25_UG_M3',
   label: 'Lawrenceville PM2.5, ug/M^3',
-  min: 0,
-  max: 100
+  min: -20,
+  max: 120,
+  color: color1
 }, {
   source: 'ACHD_Lawrenceville_2.PM10B_UG_M3',
   label: 'Lawrenceville PM10, ug/M^3',
-  min: 0,
-  max: 100
+  min: -20,
+  max: 120,
+  color: color1
 }, {
   source: 'ACHD_Avalon.SO2_PPM',
   label: 'Avalon SO2, PPM',
   min: -0.01,
-  max: 0.05
+  max: 0.07,
+  color: color2
 }, {
   source: 'ACHD_Lawrenceville.OZONE_PPM',
   label: 'Lawrenceville Ozone, PPM',
-  min: 0,
-  max: 0.1
-}, {
-  source: 'ACHD_Lawrenceville.NOX_PPB',
-  label: 'Lawrenceville NOX, PPB',
-  min: 0,
-  max: 100
+  min: -0.01,
+  max: 0.1,
+  color: color2
 }, {
   source: 'ACHD_Avalon.H2S_PPM',
   label: 'Avalon H2S, PPM',
   min: -0.01,
-  max: 0.03
+  max: 0.03,
+  color: color2
+}, {
+  source: 'ACHD_Lawrenceville.NOX_PPB',
+  label: 'Lawrenceville NOX, PPB',
+  min: -20,
+  max: 120,
+  color: color2
 }, {
   source: 'ACHD_Court_House.CO_PPM',
   label: 'Court House CO, PPM',
-  min: 0,
-  max: 1
+  min: -0.1,
+  max: 2,
+  color: color2
 }, {
   source: 'ACHD_Flag_Plaza.CO_PPM',
   label: 'Flag Plaza CO, PPM',
-  min: 0,
-  max: 1
+  min: -0.1,
+  max: 2,
+  color: color2
 }, {
   source: 'ACHD_Lawrenceville_2.CO_PPB',
   label: 'Lawrenceville CO, PPB',
-  min: 0,
-  max: 1000
+  min: -50,
+  max: 1200,
+  color: color2
 }, {
   source: 'ACHD_Avalon.OUT_T_DEGC',
   label: 'Avalon Temp, deg C',
   min: -10,
-  max: 45
+  max: 45,
+  color: color3
 }, {
   source: 'ACHD_Lawrenceville.OUT_T_DEGC',
   label: 'Lawrenceville Temp, deg C',
   min: -10,
-  max: 45
+  max: 45,
+  color: color3
 }, {
   source: 'ACHD_Lawrenceville.OUT_RH_PERCENT',
   label: 'Lawrenceville Relative Humidity, %',
   min: 0,
-  max: 100
+  max: 100,
+  color: color3
+}, {
+  source: 'ACHD_Avalon.SIGTHETA_DEG',
+  label: 'Avalon wind sigma theta, deg',
+  min: 0,
+  max: 120,
+  color: color4
 }, {
   source: 'ACHD_Avalon.SONICWS_MPH',
-  label: 'Avalon wind, MPH',
-  min: 0,
-  max: 40
+  label: 'Avalon wind speed, MPH',
+  min: -20,
+  max: 40,
+  color: color4
 }, {
   source: 'ACHD_Avalon.SONICWD_DEG',
   label: 'Avalon wind heading, deg',
-  min: 0,
-  max: 360
+  min: -30,
+  max: 390,
+  color: color4
 }];
 var series = [];
 var dateAxis;
@@ -89,8 +114,11 @@ window.grapherLoad = function() {
     var channel = channels[i];
     series[i] = {}
 
+    var color_line = "rgb(" + channel.color + ")";
+    var color_fill = "rgba(" + channel.color + ",0.2)";
+
     var row = $('<div class="chart"></div>');
-    row.append('<div class="chartTitle">' + channel.label + '</div>');
+    row.append('<div class="chartTitle" style="background:' + color_fill + '">' + channel.label + '</div>');
     row.append('<div id="series' + i + '" class="chartContent"></div>');
     row.append('<div id="series' + i + 'axis" class="chartAxis"></div>');
 
@@ -121,7 +149,7 @@ window.grapherLoad = function() {
         "type": "line",
         "lineWidth": 1,
         "show": true,
-        "color": "#0000ff"
+        "color": color_line
       }],
       highlight: {
         "lineWidth": 1,
