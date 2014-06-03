@@ -103,17 +103,26 @@ var series = [];
 var dateAxis;
 var currentDate = new Date();
 var currentDate_millisecs = currentDate.getTime();
+var lastCursorPosition;
 
 var createCharts = function() {
   $("#grapher").append('<div id="dateAxisContainer"><div id="dateAxis"></div></div>');
 
-  var minDate_millisecs = currentDate_millisecs - 2592000000;
+  var minDate_millisecs = currentDate_millisecs - 864000000;
 
   dateAxis = new DateAxis("dateAxis", "horizontal", {
     min: minDate_millisecs / 1000,
     max: currentDate_millisecs / 1000
   });
   dateAxis.setCursorPosition(getCurrentTimeMachineDateInSecs());
+  lastCursorPosition = dateAxis.getCursorPosition();
+  dateAxis.addAxisChangeListener(function(event) {
+    var currentCursorPosition = event.cursorPosition;
+    if (currentCursorPosition != lastCursorPosition) {
+      seekTimeMachine(currentCursorPosition);
+      lastCursorPosition = currentCursorPosition;
+    }
+  });
 
   // Add charts
   for (var i = 0; i < channels.length; i++) {
@@ -190,22 +199,5 @@ function setSizes() {
   for (var i = 0; i < channels.length; i++) {
     series[i].axis.setSize($('#series' + i + 'axis').width(), $('#series' + i + 'axis').height(), SequenceNumber.getNext());
     series[i].pc.setSize($('#series' + i).width(), $('#series' + i).height(), SequenceNumber.getNext());
-  }
-}
-
-function displayValue(val) {
-  $("#valueLabel").html( val ? val['dateString'] + " " + val['valueString'] : "");
-}
-
-function setCursor(time) {
-  dateAxis.setCursorPosition(time);
-  var max = dateAxis.getMax();
-  var min = dateAxis.getMin();
-  var span = max - min;
-  var offset = span / 10;
-  if (time > max - offset) {
-    dateAxis.setRange(time + offset - span, time + offset);
-  } else if (time < min + offset) {
-    dateAxis.setRange(time - offset, time - offset + span);
   }
 }
