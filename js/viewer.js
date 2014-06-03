@@ -1,6 +1,28 @@
 jQuery.support.cors = true;
 
 var json_breathecam;
+var timelapse;
+
+function setTimeMachineListeners() {
+  timelapse.addTimeChangeListener(function() {
+    setCursor(getCurrentTimeMachineDateInSecs());
+  });
+}
+
+function getCurrentTimeMachineDateInSecs() {
+  var currentCaptureTime = timelapse.getCurrentCaptureTime().split(" ");
+  var currentDateStr = currentCaptureTime[0].split("/");
+  var currentTimeStr = currentCaptureTime[1].split(":");
+  var month = parseInt(currentDateStr[0]);
+  var day = parseInt(currentDateStr[1]);
+  var year = parseInt(currentDateStr[2]);
+  var hour = parseInt(currentTimeStr[0] == 12 ? 0 : currentTimeStr[0]);
+  var min = parseInt(currentTimeStr[1]);
+  if (currentCaptureTime[2] == "PM")
+    hour += 12;
+  var currentDate = new Date(year, month - 1, day, hour, min);
+  return currentDate.getTime() / 1000;
+}
 
 function highlightDays(date) {
   date = $.datepicker.formatDate('yy-mm-dd', date);
@@ -28,17 +50,21 @@ function createDatepicker() {
   });
 }
 
-function createTimeMachine() {
+function createTimeMachine(json) {
+  json_breathecam = json;
   var settings = {
     url: json_breathecam.latest.path,
     showFullScreenBtn: false,
     mediaType: ".mp4",
     onTimeMachinePlayerReady: function(viewerDivId) {
       setupPostMessageHandlers();
+      createCharts();
+      setTimeMachineListeners();
     },
     disableTourLooping: true,
     showLogoOnDefaultUI: false,
     datasetType: "breathecam"
   };
   timelapse = new org.gigapan.timelapse.Timelapse("timeMachine", settings);
+  createDatepicker();
 }

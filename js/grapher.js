@@ -101,18 +101,19 @@ var channels = [{
 }];
 var series = [];
 var dateAxis;
+var currentDate = new Date();
+var currentDate_millisecs = currentDate.getTime();
 
-window.grapherLoad = function() {
+var createCharts = function() {
   $("#grapher").append('<div id="dateAxisContainer"><div id="dateAxis"></div></div>');
 
-  var currentDate = new Date();
-  var currentDate_millisecs = currentDate.getTime();
   var minDate_millisecs = currentDate_millisecs - 2592000000;
 
   dateAxis = new DateAxis("dateAxis", "horizontal", {
     min: minDate_millisecs / 1000,
     max: currentDate_millisecs / 1000
   });
+  dateAxis.setCursorPosition(getCurrentTimeMachineDateInSecs());
 
   // Add charts
   for (var i = 0; i < channels.length; i++) {
@@ -194,4 +195,17 @@ function setSizes() {
 
 function displayValue(val) {
   $("#valueLabel").html( val ? val['dateString'] + " " + val['valueString'] : "");
+}
+
+function setCursor(time) {
+  dateAxis.setCursorPosition(time);
+  var max = dateAxis.getMax();
+  var min = dateAxis.getMin();
+  var span = max - min;
+  var offset = span / 10;
+  if (time > max - offset) {
+    dateAxis.setRange(time + offset - span, time + offset);
+  } else if (time < min + offset) {
+    dateAxis.setRange(time - offset, time - offset + span);
+  }
 }

@@ -32,29 +32,25 @@
     <script src="timemachine-viewer/template_includes.js" type="text/javascript"></script>
 
     <link href="css/grapher.css" rel="stylesheet" type="text/css"/>
-    <link href="css/main.css" rel="stylesheet" type="text/css"/>
+    <link href="css/viewer.css" rel="stylesheet" type="text/css"/>
     <script src="js/grapher/grapher2.nocache.js"></script>
     <script src="js/grapher.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/viewer.js"></script>
 
     <script type="text/javascript">
-      function init() {
+      window.grapherLoad = function() {
         $.ajax({
           type: "GET",
           url: 'http://timemachine1.gc.cs.cmu.edu/timemachines/breathecam/timemachines/heinz/heinz.json',
           crossDomain: true,
           success: function(json) {
-            console.log("Breathecam connecting succeed.");
-            json_breathecam = json
-            createTimeMachine();
-            createDatepicker();
+            createTimeMachine(json);
           },
           error: function() {
             console.log("Breathecam connecting failed.");
           }
         });
-      }
-      $(init);
+      };
     </script>
   </head>
   <body>
