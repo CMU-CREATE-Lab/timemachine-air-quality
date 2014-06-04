@@ -5,9 +5,7 @@ var timelapse;
 var doNotSeek = false;
 
 function setChartCursor(time) {
-  doNotSeek = true;
   dateAxis.setCursorPosition(time);
-  doNotSeek = false;
 }
 
 // Calling this function during playback will cause massive lag
@@ -61,9 +59,9 @@ function seekTimeMachine(currentDateInSecs) {
       // Need to load a new dataset
       var path = json_breathecam.datasets[desiredYear + "-" + desiredMonth + "-" + desiredDay];
       if ( typeof (timelapse) !== "undefined" && timelapse && path) {
-        timelapse.removeTimeChangeListener(setChartCursorToCurrentTime);
-        timelapse.makeVideoVisibleListener(addTimelapseTimeChangeListener);
-        timelapse.loadTimelapse(path, null, closestDesiredFrame / timelapse.getFps());
+        var currentView = timelapse.getView();
+        timelapse.loadTimelapse(path, currentView, closestDesiredFrame / timelapse.getFps());
+        timelapse.makeVideoVisibleListener(onGrapherDateChange);
       }
     } else {
       // Just seek to the time
@@ -95,20 +93,21 @@ function highlightDays(date) {
     return [false, ''];
 }
 
-function addTimelapseTimeChangeListener() {
-  timelapse.addTimeChangeListener(setChartCursorToCurrentTime);
-  timelapse.removeVideoVisibleListener(addTimelapseTimeChangeListener);
-}
-
 function setChartCursorToCurrentTime() {
   setChartCursor(getCurrentTimeMachineDateInSecs());
 }
 
-function setAndRepositionChartCursorToCurrentTime() {
+function onGrapherDateChange() {
+  addTimeLineSliderListeners();
+  timelapse.removeVideoVisibleListener(onGrapherDateChange);
+}
+
+function onCalendarDateChange() {
   var time = getCurrentTimeMachineDateInSecs();
   setChartCursor(time);
   repositionChartCursor(time);
-  timelapse.removeVideoVisibleListener(setAndRepositionChartCursorToCurrentTime);
+  addTimeLineSliderListeners();
+  timelapse.removeVideoVisibleListener(onCalendarDateChange);
 }
 
 function selectDay(dateText, dateElem) {
@@ -116,7 +115,7 @@ function selectDay(dateText, dateElem) {
   var path = json_breathecam.datasets[date];
   if ( typeof (timelapse) !== "undefined" && timelapse && path) {
     timelapse.loadTimelapse(path, null, null, true);
-    timelapse.makeVideoVisibleListener(setAndRepositionChartCursorToCurrentTime);
+    timelapse.makeVideoVisibleListener(onCalendarDateChange);
   }
 }
 
@@ -131,6 +130,48 @@ function createDatepicker() {
   });
 }
 
+function addTimeLineSliderListeners() {
+  $("#Tslider1").mousedown(function() {
+    if (!doNotSeek) {
+      doNotSeek = true;
+      setChartCursorToCurrentTime();
+      timelapse.addTimeChangeListener(setChartCursorToCurrentTime);
+      // Make sure we release mousedown upon exiting our viewport if we are inside an iframe
+      $("body").one("mouseleave", function(event) {
+        if (window && (window.self !== window.top)) {
+          if (doNotSeek) {
+            timelapse.removeTimeChangeListener(setChartCursorToCurrentTime);
+            doNotSeek = false;
+          }
+        }
+      });
+      // Release mousedown upon mouseup
+      $(document).one("mouseup", function(event) {
+        if (doNotSeek) {
+          timelapse.removeTimeChangeListener(setChartCursorToCurrentTime);
+          doNotSeek = false;
+        }
+      });
+    }
+  });
+}
+
+function addPlayButtonListeners() {
+  $(".playbackButton").click(function() {
+    if ($(this).hasClass("pause")) {
+      if (!doNotSeek) {
+        doNotSeek = true;
+        timelapse.addTimeChangeListener(setChartCursorToCurrentTime);
+      }
+    } else if ($(this).hasClass("play")) {
+      if (doNotSeek) {
+        timelapse.removeTimeChangeListener(setChartCursorToCurrentTime);
+        doNotSeek = false;
+      }
+    }
+  });
+}
+
 function createTimeMachine(json) {
   json_breathecam = json;
   var settings = {
@@ -141,7 +182,8 @@ function createTimeMachine(json) {
       setupPostMessageHandlers();
       timelapse.seekToFrame(timelapse.getNumFrames() - 200);
       createCharts();
-      timelapse.addTimeChangeListener(setChartCursorToCurrentTime);
+      addTimeLineSliderListeners();
+      addPlayButtonListeners();
     },
     disableTourLooping: true,
     showLogoOnDefaultUI: false,

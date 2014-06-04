@@ -96,7 +96,7 @@ var channels = [{
   source: 'ACHD_Avalon.SONICWD_DEG',
   label: 'Avalon wind heading, deg',
   min: -30,
-  max: 390,
+  max: 470,
   color: color4
 }];
 var series = [];
