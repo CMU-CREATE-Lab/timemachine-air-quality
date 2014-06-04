@@ -119,17 +119,6 @@ function selectDay(dateText, dateElem) {
   }
 }
 
-function createDatepicker() {
-  var startingDate = json_breathecam.latest.date;
-  var dateArray = startingDate.split("-");
-  $("#datepicker").datepicker({
-    defaultDate: new Date(dateArray[0], dateArray[1] - 1, dateArray[2]),
-    minDate: new Date(2014, 0),
-    onSelect: selectDay,
-    beforeShowDay: highlightDays
-  });
-}
-
 function addTimeLineSliderListeners() {
   $("#Tslider1").mousedown(function() {
     if (!doNotSeek) {
@@ -172,15 +161,43 @@ function addPlayButtonListeners() {
   });
 }
 
+function unpackVars(str) {
+  var keyvals = str.split('&');
+  var vars = {};
+
+  if (keyvals.length == 1 && keyvals[0] === "")
+    return null;
+
+  for (var i = 0; i < keyvals.length; i++) {
+    var keyval = keyvals[i].split('=');
+    vars[keyval[0]] = keyval[1];
+  }
+  return vars;
+}
+
 function createTimeMachine(json) {
   json_breathecam = json;
+
+  initialDataset = json_breathecam.latest.path;
+  var startingDate = json_breathecam.latest.date;
+
+  var hash = window.location.hash.slice(1);
+  var hashVars = unpackVars(hash);
+
+  if (hashVars && hashVars.d) {
+    startingDate = hashVars.d;
+    initialDataset = initialDataset.replace(/\d\d\d\d-\d\d-\d\d/, hashVars.d);
+  }
+
   var settings = {
-    url: json_breathecam.latest.path,
+    url: initialDataset,
     showFullScreenBtn: false,
     mediaType: ".mp4",
     onTimeMachinePlayerReady: function(viewerDivId) {
       setupPostMessageHandlers();
-      timelapse.seekToFrame(timelapse.getNumFrames() - 200);
+      if (!hashVars) {
+        timelapse.seekToFrame(timelapse.getNumFrames() - 200);
+      }
       createCharts();
       addTimeLineSliderListeners();
       addPlayButtonListeners();
@@ -190,5 +207,13 @@ function createTimeMachine(json) {
     datasetType: "breathecam"
   };
   timelapse = new org.gigapan.timelapse.Timelapse("timeMachine", settings);
-  createDatepicker();
+
+  // Create datepicker
+  var dateArray = startingDate.split("-");
+  $("#datepicker").datepicker({
+    defaultDate: new Date(dateArray[0], dateArray[1] - 1, dateArray[2]),
+    minDate: new Date(2014, 0),
+    onSelect: selectDay,
+    beforeShowDay: highlightDays
+  });
 }
