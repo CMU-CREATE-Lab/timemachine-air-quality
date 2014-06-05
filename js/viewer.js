@@ -4,8 +4,33 @@ var json_breathecam;
 var timelapse;
 var doNotSeek = false;
 
+var setChartCursorTimer = null;
+var lastSetChartCursorTime = 0;
+var fastestUpdateTime_slow = 700;
+var fastestUpdateTime_fast = 100;
+var fastestUpdateTime = fastestUpdateTime_slow;
+
 function setChartCursor(time) {
-  dateAxis.setCursorPosition(time);
+  if (setChartCursorTimer) {
+    // We're already scheduled to make an update at the earliest
+    // possible time.  Do nothing.
+    return;
+  }
+  // Make sure not to call more often than this interval
+  var firstAllowedUpdate = lastSetChartCursorTime + fastestUpdateTime;
+  var currentTime = new Date().getTime();
+  if (currentTime >= firstAllowedUpdate) {
+    // OK to update now
+    dateAxis.setCursorPosition(time);
+    lastSetChartCursorTime = currentTime;
+  } else {
+    // Schedule update at first allowed time
+    setChartCursorTimer = setTimeout(function() {
+      dateAxis.setCursorPosition(time);
+      lastSetChartCursorTime = new Date().getTime();
+      setChartCursorTimer = null;
+    }, firstAllowedUpdate - currentTime);
+  }
 }
 
 // Calling this function during playback will cause massive lag
@@ -119,44 +144,49 @@ function selectDay(dateText, dateElem) {
   }
 }
 
+function addTimeMachineTimeChangeListener() {
+  if (!doNotSeek) {
+    doNotSeek = true;
+    timelapse.addTimeChangeListener(setChartCursorToCurrentTime);
+  }
+}
+
+function removeTimeMachineTimeChangeListener() {
+  if (doNotSeek) {
+    timelapse.removeTimeChangeListener(setChartCursorToCurrentTime);
+    doNotSeek = false;
+  }
+}
+
 function addTimeLineSliderListeners() {
   $("#Tslider1").mousedown(function() {
-    if (!doNotSeek) {
-      doNotSeek = true;
-      setChartCursorToCurrentTime();
-      timelapse.addTimeChangeListener(setChartCursorToCurrentTime);
-      // Make sure we release mousedown upon exiting our viewport if we are inside an iframe
-      $("body").one("mouseleave", function(event) {
-        if (window && (window.self !== window.top)) {
-          if (doNotSeek) {
-            timelapse.removeTimeChangeListener(setChartCursorToCurrentTime);
-            doNotSeek = false;
-          }
-        }
-      });
-      // Release mousedown upon mouseup
-      $(document).one("mouseup", function(event) {
-        if (doNotSeek) {
-          timelapse.removeTimeChangeListener(setChartCursorToCurrentTime);
-          doNotSeek = false;
-        }
-      });
-    }
+    fastestUpdateTime = fastestUpdateTime_fast;
+    setChartCursorToCurrentTime();
+    if (timelapse.isPaused())
+      addTimeMachineTimeChangeListener();
+    // Make sure we release mousedown upon exiting our viewport if we are inside an iframe
+    $("body").one("mouseleave", function(event) {
+      if (window && (window.self !== window.top)) {
+        if (timelapse.isPaused())
+          removeTimeMachineTimeChangeListener();
+        fastestUpdateTime = fastestUpdateTime_slow;
+      }
+    });
+    // Release mousedown upon mouseup
+    $(document).one("mouseup", function(event) {
+      if (timelapse.isPaused())
+        removeTimeMachineTimeChangeListener();
+      fastestUpdateTime = fastestUpdateTime_slow;
+    });
   });
 }
 
 function addPlayButtonListeners() {
   $(".playbackButton").click(function() {
     if ($(this).hasClass("pause")) {
-      if (!doNotSeek) {
-        doNotSeek = true;
-        timelapse.addTimeChangeListener(setChartCursorToCurrentTime);
-      }
+      addTimeMachineTimeChangeListener();
     } else if ($(this).hasClass("play")) {
-      if (doNotSeek) {
-        timelapse.removeTimeChangeListener(setChartCursorToCurrentTime);
-        doNotSeek = false;
-      }
+      removeTimeMachineTimeChangeListener();
     }
   });
 }
