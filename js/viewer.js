@@ -2,11 +2,11 @@ jQuery.support.cors = true;
 
 var json_breathecam;
 var timelapse;
-var doNotSeek = false;
+var timeChangeListenerExist = false;
 
 var setChartCursorTimer = null;
 var lastSetChartCursorTime = 0;
-var fastestUpdateTime_slow = 700;
+var fastestUpdateTime_slow = 500;
 var fastestUpdateTime_fast = 100;
 var fastestUpdateTime = fastestUpdateTime_slow;
 
@@ -47,51 +47,49 @@ function repositionChartCursor(time) {
 }
 
 function seekTimeMachine(currentDateInSecs) {
-  if (!doNotSeek) {
-    var desiredDate = new Date(currentDateInSecs * 1000);
-    var desiredYear = desiredDate.getFullYear();
-    var desiredMonth = desiredDate.getMonth() + 1;
-    var desiredDay = desiredDate.getDate();
-    var desiredHour = desiredDate.getHours();
-    var desiredMin = desiredDate.getMinutes();
-    var desiredAMPM = "AM";
+  var desiredDate = new Date(currentDateInSecs * 1000);
+  var desiredYear = desiredDate.getFullYear();
+  var desiredMonth = desiredDate.getMonth() + 1;
+  var desiredDay = desiredDate.getDate();
+  var desiredHour = desiredDate.getHours();
+  var desiredMin = desiredDate.getMinutes();
+  var desiredAMPM = "AM";
 
-    if (desiredHour == 0)
-      desiredHour = 12;
-    else if (desiredHour == 12)
-      am_pm = "PM";
-    else if (desiredHour > 12) {
-      desiredHour -= 12;
-      desiredAMPM = "PM";
+  if (desiredHour == 0)
+    desiredHour = 12;
+  else if (desiredHour == 12)
+    am_pm = "PM";
+  else if (desiredHour > 12) {
+    desiredHour -= 12;
+    desiredAMPM = "PM";
+  }
+
+  if (desiredMonth < 10)
+    desiredMonth = "0" + desiredMonth;
+  if (desiredDay < 10)
+    desiredDay = "0" + desiredDay;
+  if (desiredHour < 10)
+    desiredHour = "0" + desiredHour;
+  if (desiredMin < 10)
+    desiredMin = "0" + desiredMin;
+
+  var desiredCaptureTime_1 = desiredMonth + "/" + desiredDay + "/" + desiredYear;
+  var desiredCaptureTime_2 = desiredHour + ":" + desiredMin + " " + desiredAMPM;
+  var desiredCaptureTime = desiredCaptureTime_1 + " " + desiredCaptureTime_2;
+  var currentCaptureTime_1 = timelapse.getCurrentCaptureTime().split(" ")[0];
+
+  if (desiredCaptureTime_1 != currentCaptureTime_1) {
+    // Need to load a new dataset
+    var path = json_breathecam.datasets[desiredYear + "-" + desiredMonth + "-" + desiredDay];
+    if ( typeof (timelapse) !== "undefined" && timelapse && path) {
+      var currentView = timelapse.getView();
+      timelapse.loadTimelapse(path, currentView, null, null, desiredDate);
+      timelapse.makeVideoVisibleListener(onGrapherDateChange);
     }
-
-    if (desiredMonth < 10)
-      desiredMonth = "0" + desiredMonth;
-    if (desiredDay < 10)
-      desiredDay = "0" + desiredDay;
-    if (desiredHour < 10)
-      desiredHour = "0" + desiredHour;
-    if (desiredMin < 10)
-      desiredMin = "0" + desiredMin;
-
-    var desiredCaptureTime_1 = desiredMonth + "/" + desiredDay + "/" + desiredYear;
-    var desiredCaptureTime_2 = desiredHour + ":" + desiredMin + " " + desiredAMPM;
-    var desiredCaptureTime = desiredCaptureTime_1 + " " + desiredCaptureTime_2;
-    var currentCaptureTime_1 = timelapse.getCurrentCaptureTime().split(" ")[0];
-
-    if (desiredCaptureTime_1 != currentCaptureTime_1) {
-      // Need to load a new dataset
-      var path = json_breathecam.datasets[desiredYear + "-" + desiredMonth + "-" + desiredDay];
-      if ( typeof (timelapse) !== "undefined" && timelapse && path) {
-        var currentView = timelapse.getView();
-        timelapse.loadTimelapse(path, currentView, null, null, desiredDate);
-        timelapse.makeVideoVisibleListener(onGrapherDateChange);
-      }
-    } else {
-      // Just seek to the time
-      var closestDesiredFrame = timelapse.findExactOrClosestCaptureTime(desiredDate.toTimeString().substr(0, 5));
-      timelapse.seekToFrame(closestDesiredFrame);
-    }
+  } else {
+    // Just seek to the time
+    var closestDesiredFrame = timelapse.findExactOrClosestCaptureTime(desiredDate.toTimeString().substr(0, 5));
+    timelapse.seekToFrame(closestDesiredFrame);
   }
 }
 
@@ -145,16 +143,16 @@ function selectDay(dateText, dateElem) {
 }
 
 function addTimeMachineTimeChangeListener() {
-  if (!doNotSeek) {
-    doNotSeek = true;
+  if (!timeChangeListenerExist) {
+    timeChangeListenerExist = true;
     timelapse.addTimeChangeListener(setChartCursorToCurrentTime);
   }
 }
 
 function removeTimeMachineTimeChangeListener() {
-  if (doNotSeek) {
+  if (timeChangeListenerExist) {
     timelapse.removeTimeChangeListener(setChartCursorToCurrentTime);
-    doNotSeek = false;
+    timeChangeListenerExist = false;
   }
 }
 

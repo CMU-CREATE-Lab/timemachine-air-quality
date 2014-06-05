@@ -104,6 +104,7 @@ var dateAxis;
 var currentDate = new Date();
 var currentDate_millisecs = currentDate.getTime();
 var lastCursorPosition;
+var axisChangeListenerExist = false;
 
 var createCharts = function() {
   $("#grapher").append('<div id="dateAxisContainer"><div id="dateAxis"></div></div>');
@@ -116,13 +117,8 @@ var createCharts = function() {
   });
   dateAxis.setCursorPosition(getCurrentTimeMachineDateInSecs());
   lastCursorPosition = dateAxis.getCursorPosition();
-  dateAxis.addAxisChangeListener(function(event) {
-    var currentCursorPosition = event.cursorPosition;
-    if (currentCursorPosition != lastCursorPosition) {
-      seekTimeMachine(currentCursorPosition);
-      lastCursorPosition = currentCursorPosition;
-    }
-  });
+
+  $("#dateAxis").mousedown(onGrapherMouseDown);
 
   // Add charts
   for (var i = 0; i < channels.length; i++) {
@@ -136,8 +132,9 @@ var createCharts = function() {
     row.append('<div class="chartTitle" style="background:' + color_fill + '">' + channel.label + '</div>');
     row.append('<div id="series' + i + '" class="chartContent"></div>');
     row.append('<div id="series' + i + 'axis" class="chartAxis"></div>');
-
     $('#grapher').append(row);
+
+    $("#series" + i).mousedown(onGrapherMouseDown);
 
     series[i].axis = new NumberAxis('series' + i + 'axis', "vertical", {
       min: channel.min,
@@ -193,6 +190,45 @@ var createCharts = function() {
   $(window).resize(setSizes);
   setSizes();
 };
+
+function onGrapherMouseDown() {
+  if (timelapse.isPaused())
+    addGrapherAxisChangeListener();
+  // Make sure we release mousedown upon exiting our viewport if we are inside an iframe
+  $("body").one("mouseleave", function(event) {
+    if (window && (window.self !== window.top)) {
+      if (timelapse.isPaused())
+        removeGrapherAxisChangeListener();
+    }
+  });
+  // Release mousedown upon mouseup
+  $(document).one("mouseup", function(event) {
+    if (timelapse.isPaused())
+      removeGrapherAxisChangeListener();
+  });
+}
+
+function addGrapherAxisChangeListener() {
+  if (!axisChangeListenerExist) {
+    axisChangeListenerExist = true;
+    dateAxis.addAxisChangeListener(seekTimeMachineToCurrentCursorPosition);
+  }
+}
+
+function removeGrapherAxisChangeListener() {
+  if (axisChangeListenerExist) {
+    dateAxis.removeAxisChangeListener(seekTimeMachineToCurrentCursorPosition);
+    axisChangeListenerExist = false;
+  }
+}
+
+function seekTimeMachineToCurrentCursorPosition(event) {
+  var currentCursorPosition = event.cursorPosition;
+  if (lastCursorPosition != currentCursorPosition) {
+    seekTimeMachine(currentCursorPosition);
+    lastCursorPosition = currentCursorPosition;
+  }
+}
 
 function setSizes() {
   dateAxis.setSize($('#dateAxis').width(), $("#dateAxis").height(), SequenceNumber.getNext());
