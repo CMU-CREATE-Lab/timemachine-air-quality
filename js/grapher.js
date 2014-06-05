@@ -223,14 +223,18 @@ function onGrapherMouseDown() {
   // Make sure we release mousedown upon exiting our viewport if we are inside an iframe
   $("body").one("mouseleave", function(event) {
     if (window && (window.self !== window.top)) {
-      if (timelapse.isPaused())
+      if (timelapse.isPaused()) {
         removeGrapherAxisChangeListener();
+        seekTimeMachine(dateAxis.getCursorPosition());
+      }
     }
   });
   // Release mousedown upon mouseup
   $(document).one("mouseup", function(event) {
-    if (timelapse.isPaused())
+    if (timelapse.isPaused()) {
       removeGrapherAxisChangeListener();
+      seekTimeMachine(dateAxis.getCursorPosition());
+    }
   });
 }
 

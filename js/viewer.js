@@ -129,6 +129,8 @@ function setChartCursorToCurrentTime() {
 }
 
 function onGrapherDateChange() {
+  // Because the viewer removes all timeline mousedown listeners after loading a new dataset,
+  // we need to add the listeners back.
   addTimeLineSliderListeners();
   timelapse.removeVideoVisibleListener(onGrapherDateChange);
 }
