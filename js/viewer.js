@@ -78,18 +78,18 @@ function seekTimeMachine(currentDateInSecs) {
     var desiredCaptureTime_2 = desiredHour + ":" + desiredMin + " " + desiredAMPM;
     var desiredCaptureTime = desiredCaptureTime_1 + " " + desiredCaptureTime_2;
     var currentCaptureTime_1 = timelapse.getCurrentCaptureTime().split(" ")[0];
-    var closestDesiredFrame = timelapse.findExactOrClosestCaptureTime(desiredDate.toTimeString().substr(0, 5));
 
     if (desiredCaptureTime_1 != currentCaptureTime_1) {
       // Need to load a new dataset
       var path = json_breathecam.datasets[desiredYear + "-" + desiredMonth + "-" + desiredDay];
       if ( typeof (timelapse) !== "undefined" && timelapse && path) {
         var currentView = timelapse.getView();
-        timelapse.loadTimelapse(path, currentView, closestDesiredFrame / timelapse.getFps());
+        timelapse.loadTimelapse(path, currentView, null, null, desiredDate);
         timelapse.makeVideoVisibleListener(onGrapherDateChange);
       }
     } else {
       // Just seek to the time
+      var closestDesiredFrame = timelapse.findExactOrClosestCaptureTime(desiredDate.toTimeString().substr(0, 5));
       timelapse.seekToFrame(closestDesiredFrame);
     }
   }
@@ -231,6 +231,7 @@ function createTimeMachine(json) {
       createCharts();
       addTimeLineSliderListeners();
       addPlayButtonListeners();
+      onCalendarDateChange();
     },
     disableTourLooping: true,
     showLogoOnDefaultUI: false,
