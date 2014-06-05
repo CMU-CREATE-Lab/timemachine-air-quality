@@ -1,16 +1,23 @@
 #timeMachine {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 980px;
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  right: 240px;
+  width: auto;
   height: 492px;
+  background: white;
+  z-index: 50;
 }
 
 #datepicker {
-  position: absolute;
-  top: 10px;
-  left: 1000px;
+  position: fixed;
+  top: 0px;
+  right: 0px;
   font-size: 10px;
+}
+
+#datepicker .ui-datepicker {
+  border-radius: 2px;
 }
 
 #datepicker .ui-state-default {

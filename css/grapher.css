@@ -2,9 +2,22 @@
   font-family: "Gill Sans Light", Verdana, Arial, sans-serif !important;
   font-size: 10pt !important;
   position: absolute;
-  left: 10px;
-  top: 515px;
-  width: 980px;
+  left: 0px;
+  right: 241px;
+  top: 505px;
+  width: auto;
+}
+
+#block {
+  position: fixed;
+  top: 492px;
+  left: 0px;
+  right: 241px;
+  height: 51px;
+  width: auto;
+  background: white;
+  z-index: 49;
+  border-bottom: 1px solid black;
 }
 
 #dateAxisContainer {
@@ -13,11 +26,12 @@
 }
 
 #dateAxis {
-  position: absolute;
+  position: fixed;
   left: 100px;
-  right: 35px;
+  right: 276px;
   height: 37px;
   border: 1px solid black;
+  z-index: 50;
 }
 
 .chart {
