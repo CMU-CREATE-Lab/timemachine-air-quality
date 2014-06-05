@@ -4,12 +4,13 @@ var json_breathecam;
 var timelapse;
 var timeChangeListenerExist = false;
 var $datepicker;
+var lastDateInSecs;
 
 var setChartCursorTimer = null;
 var lastSetChartCursorTime = 0;
-var fastestUpdateTime_slow = 500;
-var fastestUpdateTime_fast = 100;
-var fastestUpdateTime = fastestUpdateTime_slow;
+var fastestSetChartCursorTime_slow = 500;
+var fastestSetChartCursorTime_fast = 100;
+var fastestSetChartCursorTime = fastestSetChartCursorTime_slow;
 
 function setChartCursor(time) {
   if (setChartCursorTimer) {
@@ -18,9 +19,9 @@ function setChartCursor(time) {
     return;
   }
   // Make sure not to call more often than this interval
-  var firstAllowedUpdate = lastSetChartCursorTime + fastestUpdateTime;
+  var firstAllowedUpdateTime = lastSetChartCursorTime + fastestSetChartCursorTime;
   var currentTime = new Date().getTime();
-  if (currentTime >= firstAllowedUpdate) {
+  if (currentTime >= firstAllowedUpdateTime) {
     // OK to update now
     dateAxis.setCursorPosition(time);
     lastSetChartCursorTime = currentTime;
@@ -30,7 +31,7 @@ function setChartCursor(time) {
       dateAxis.setCursorPosition(time);
       lastSetChartCursorTime = new Date().getTime();
       setChartCursorTimer = null;
-    }, firstAllowedUpdate - currentTime);
+    }, firstAllowedUpdateTime - currentTime);
   }
 }
 
@@ -48,6 +49,11 @@ function repositionChartCursor(time) {
 }
 
 function seekTimeMachine(currentDateInSecs) {
+  if (currentDateInSecs == lastDateInSecs)
+    return;
+  else
+    lastDateInSecs = currentDateInSecs;
+
   var desiredDate = new Date(currentDateInSecs * 1000);
   var desiredYear = desiredDate.getFullYear();
   var desiredMonth = desiredDate.getMonth() + 1;
@@ -160,7 +166,7 @@ function removeTimeMachineTimeChangeListener() {
 
 function addTimeLineSliderListeners() {
   $("#Tslider1").mousedown(function() {
-    fastestUpdateTime = fastestUpdateTime_fast;
+    fastestSetChartCursorTime = fastestSetChartCursorTime_fast;
     setChartCursorToCurrentTime();
     if (timelapse.isPaused())
       addTimeMachineTimeChangeListener();
@@ -169,14 +175,14 @@ function addTimeLineSliderListeners() {
       if (window && (window.self !== window.top)) {
         if (timelapse.isPaused())
           removeTimeMachineTimeChangeListener();
-        fastestUpdateTime = fastestUpdateTime_slow;
+        fastestSetChartCursorTime = fastestSetChartCursorTime_slow;
       }
     });
     // Release mousedown upon mouseup
     $(document).one("mouseup", function(event) {
       if (timelapse.isPaused())
         removeTimeMachineTimeChangeListener();
-      fastestUpdateTime = fastestUpdateTime_slow;
+      fastestSetChartCursorTime = fastestSetChartCursorTime_slow;
     });
   });
 }

@@ -103,8 +103,34 @@ var series = [];
 var dateAxis;
 var currentDate = new Date();
 var currentDate_millisecs = currentDate.getTime();
-var lastCursorPosition;
 var axisChangeListenerExist = false;
+
+var seekTimeMachineTimer = null;
+var lastSeekTimeMachineTime = 0;
+var fastestSeekTimeMachineTime = 200;
+
+function seekTimeMachineToCurrentCursorPosition(event) {
+  if (seekTimeMachineTimer) {
+    // We're already scheduled to make an update at the earliest
+    // possible time.  Do nothing.
+    return;
+  }
+  // Make sure not to call more often than this interval
+  var firstAllowedUpdateTime = lastSeekTimeMachineTime + fastestSeekTimeMachineTime;
+  var currentTime = new Date().getTime();
+  if (currentTime >= firstAllowedUpdateTime) {
+    // OK to update now
+    seekTimeMachine(event.cursorPosition);
+    lastSeekTimeMachineTime = currentTime;
+  } else {
+    // Schedule update at first allowed time
+    seekTimeMachineTimer = setTimeout(function() {
+      seekTimeMachine(event.cursorPosition);
+      lastSeekTimeMachineTime = new Date().getTime();
+      seekTimeMachineTimer = null;
+    }, firstAllowedUpdateTime - currentTime);
+  }
+}
 
 var createCharts = function() {
   $("#grapher").append('<div id="dateAxisContainer"><div id="dateAxis"></div></div>');
@@ -219,14 +245,6 @@ function removeGrapherAxisChangeListener() {
   if (axisChangeListenerExist) {
     dateAxis.removeAxisChangeListener(seekTimeMachineToCurrentCursorPosition);
     axisChangeListenerExist = false;
-  }
-}
-
-function seekTimeMachineToCurrentCursorPosition(event) {
-  var currentCursorPosition = event.cursorPosition;
-  if (lastCursorPosition != currentCursorPosition) {
-    seekTimeMachine(currentCursorPosition);
-    lastCursorPosition = currentCursorPosition;
   }
 }
 
