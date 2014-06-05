@@ -3,6 +3,7 @@ jQuery.support.cors = true;
 var json_breathecam;
 var timelapse;
 var timeChangeListenerExist = false;
+var $datepicker;
 
 var setChartCursorTimer = null;
 var lastSetChartCursorTime = 0;
@@ -84,6 +85,7 @@ function seekTimeMachine(currentDateInSecs) {
     if ( typeof (timelapse) !== "undefined" && timelapse && path) {
       var currentView = timelapse.getView();
       timelapse.loadTimelapse(path, currentView, null, null, desiredDate);
+      $datepicker.datepicker("setDate", desiredDate);
       timelapse.makeVideoVisibleListener(onGrapherDateChange);
     }
   } else {
@@ -239,7 +241,8 @@ function createTimeMachine(json) {
 
   // Create datepicker
   var dateArray = startingDate.split("-");
-  $("#datepicker").datepicker({
+  $datepicker = $("#datepicker");
+  $datepicker.datepicker({
     defaultDate: new Date(dateArray[0], dateArray[1] - 1, dateArray[2]),
     minDate: new Date(2014, 0),
     onSelect: selectDay,
