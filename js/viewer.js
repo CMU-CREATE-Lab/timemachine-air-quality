@@ -8,7 +8,7 @@ var lastDateInSecs;
 
 var setChartCursorTimer = null;
 var lastSetChartCursorTime = 0;
-var fastestSetChartCursorTime_slow = 500;
+var fastestSetChartCursorTime_slow = 700;
 var fastestSetChartCursorTime_fast = 100;
 var fastestSetChartCursorTime = fastestSetChartCursorTime_slow;
 
@@ -48,10 +48,12 @@ function repositionChartCursor(time) {
   }
 }
 
-function seekTimeMachine(currentDateInSecs) {
-  if (currentDateInSecs == lastDateInSecs)
+function seekTimeMachine(currentDateInSecs, onSeekCompleteCallBack) {
+  if (currentDateInSecs == lastDateInSecs) {
+    if ( typeof onSeekCompleteCallBack === "function")
+      onSeekCompleteCallBack();
     return;
-  else
+  } else
     lastDateInSecs = currentDateInSecs;
 
   var desiredDate = new Date(currentDateInSecs * 1000);
@@ -90,14 +92,21 @@ function seekTimeMachine(currentDateInSecs) {
     var path = json_breathecam.datasets[desiredYear + "-" + desiredMonth + "-" + desiredDay];
     if ( typeof (timelapse) !== "undefined" && timelapse && path) {
       var currentView = timelapse.getView();
-      timelapse.loadTimelapse(path, currentView, null, null, desiredDate);
-      $datepicker.datepicker("setDate", desiredDate);
-      timelapse.makeVideoVisibleListener(onGrapherDateChange);
+      timelapse.loadTimelapse(path, currentView, null, null, desiredDate, function() {
+        // Because the viewer removes all timeline mousedown listeners after loading a new dataset,
+        // we need to add the listeners back.
+        addTimeLineSliderListeners();
+        $datepicker.datepicker("setDate", desiredDate);
+        if ( typeof onSeekCompleteCallBack === "function")
+          onSeekCompleteCallBack();
+      });
     }
   } else {
     // Just seek to the time
     var closestDesiredFrame = timelapse.findExactOrClosestCaptureTime(desiredDate.toTimeString().substr(0, 5));
     timelapse.seekToFrame(closestDesiredFrame);
+    if ( typeof onSeekCompleteCallBack === "function")
+      onSeekCompleteCallBack();
   }
 }
 
@@ -128,27 +137,18 @@ function setChartCursorToCurrentTime() {
   setChartCursor(getCurrentTimeMachineDateInSecs());
 }
 
-function onGrapherDateChange() {
-  // Because the viewer removes all timeline mousedown listeners after loading a new dataset,
-  // we need to add the listeners back.
-  addTimeLineSliderListeners();
-  timelapse.removeVideoVisibleListener(onGrapherDateChange);
-}
-
 function onCalendarDateChange() {
   var time = getCurrentTimeMachineDateInSecs();
   setChartCursor(time);
   repositionChartCursor(time);
   addTimeLineSliderListeners();
-  timelapse.removeVideoVisibleListener(onCalendarDateChange);
 }
 
 function selectDay(dateText, dateElem) {
   var date = $.datepicker.formatDate('yy-mm-dd', new Date(dateText));
   var path = json_breathecam.datasets[date];
   if ( typeof (timelapse) !== "undefined" && timelapse && path) {
-    timelapse.loadTimelapse(path, null, null, true);
-    timelapse.makeVideoVisibleListener(onCalendarDateChange);
+    timelapse.loadTimelapse(path, null, null, true, onCalendarDateChange);
   }
 }
 
@@ -162,6 +162,8 @@ function addTimeMachineTimeChangeListener() {
 function removeTimeMachineTimeChangeListener() {
   if (timeChangeListenerExist) {
     timelapse.removeTimeChangeListener(setChartCursorToCurrentTime);
+    clearTimeout(setChartCursorTimer);
+    setChartCursorTimer = null;
     timeChangeListenerExist = false;
   }
 }

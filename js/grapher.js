@@ -104,6 +104,7 @@ var dateAxis;
 var currentDate = new Date();
 var currentDate_millisecs = currentDate.getTime();
 var axisChangeListenerExist = false;
+var originalIsPaused;
 
 var seekTimeMachineTimer = null;
 var lastSeekTimeMachineTime = 0;
@@ -218,23 +219,33 @@ var createCharts = function() {
 };
 
 function onGrapherMouseDown() {
-  if (timelapse.isPaused())
-    addGrapherAxisChangeListener();
+  originalIsPaused = timelapse.isPaused();
+  if (!originalIsPaused) {
+    removeTimeMachineTimeChangeListener();
+    timelapse.handlePlayPause();
+  }
+  addGrapherAxisChangeListener();
   // Make sure we release mousedown upon exiting our viewport if we are inside an iframe
   $("body").one("mouseleave", function(event) {
     if (window && (window.self !== window.top)) {
-      if (timelapse.isPaused()) {
-        removeGrapherAxisChangeListener();
-        seekTimeMachine(dateAxis.getCursorPosition());
-      }
+      removeGrapherAxisChangeListener();
+      seekTimeMachine(dateAxis.getCursorPosition(), function() {
+        if (!originalIsPaused) {
+          addTimeMachineTimeChangeListener();
+          timelapse.handlePlayPause();
+        }
+      });
     }
   });
   // Release mousedown upon mouseup
   $(document).one("mouseup", function(event) {
-    if (timelapse.isPaused()) {
-      removeGrapherAxisChangeListener();
-      seekTimeMachine(dateAxis.getCursorPosition());
-    }
+    removeGrapherAxisChangeListener();
+    seekTimeMachine(dateAxis.getCursorPosition(), function() {
+      if (!originalIsPaused) {
+        addTimeMachineTimeChangeListener();
+        timelapse.handlePlayPause();
+      }
+    });
   });
 }
 
@@ -248,6 +259,8 @@ function addGrapherAxisChangeListener() {
 function removeGrapherAxisChangeListener() {
   if (axisChangeListenerExist) {
     dateAxis.removeAxisChangeListener(seekTimeMachineToCurrentCursorPosition);
+    clearTimeout(seekTimeMachineTimer);
+    seekTimeMachineTimer = null;
     axisChangeListenerExist = false;
   }
 }
