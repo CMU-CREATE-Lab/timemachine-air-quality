@@ -136,7 +136,7 @@ function seekTimeMachineToCurrentCursorPosition(event) {
 var createCharts = function() {
   $("#grapher").append('<div id="dateAxisContainer"><div id="dateAxis"></div></div>');
 
-  var minDate_millisecs = currentDate_millisecs - 1209600000;
+  var minDate_millisecs = currentDate_millisecs - 1814400000;
 
   dateAxis = new DateAxis("dateAxis", "horizontal", {
     min: minDate_millisecs / 1000,
