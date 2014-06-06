@@ -85,26 +85,31 @@ function seekTimeMachine(currentDateInSecs, onSeekCompleteCallBack) {
   var desiredCaptureTime_1 = desiredMonth + "/" + desiredDay + "/" + desiredYear;
   var desiredCaptureTime_2 = desiredHour + ":" + desiredMin + " " + desiredAMPM;
   var desiredCaptureTime = desiredCaptureTime_1 + " " + desiredCaptureTime_2;
-  var currentCaptureTime_1 = timelapse.getCurrentCaptureTime().split(" ")[0];
-
-  if (desiredCaptureTime_1 != currentCaptureTime_1) {
-    // Need to load a new dataset
-    var path = json_breathecam.datasets[desiredYear + "-" + desiredMonth + "-" + desiredDay];
-    if ( typeof (timelapse) !== "undefined" && timelapse && path) {
-      var currentView = timelapse.getView();
-      timelapse.loadTimelapse(path, currentView, null, null, desiredDate, function() {
-        // Because the viewer removes all timeline mousedown listeners after loading a new dataset,
-        // we need to add the listeners back.
-        addTimeLineSliderListeners();
-        $datepicker.datepicker("setDate", desiredDate);
-        if ( typeof onSeekCompleteCallBack === "function")
-          onSeekCompleteCallBack();
-      });
+  var currentCaptureTime = timelapse.getCurrentCaptureTime();
+  if (currentCaptureTime) {
+    var currentCaptureTime_1 = currentCaptureTime.split(" ")[0];
+    if (desiredCaptureTime_1 != currentCaptureTime_1) {
+      // Need to load a new dataset
+      var path = json_breathecam.datasets[desiredYear + "-" + desiredMonth + "-" + desiredDay];
+      if ( typeof (timelapse) !== "undefined" && timelapse && path) {
+        var currentView = timelapse.getView();
+        timelapse.loadTimelapse(path, currentView, null, null, desiredDate, function() {
+          // Because the viewer removes all timeline mousedown listeners after loading a new dataset,
+          // we need to add the listeners back.
+          addTimeLineSliderListeners();
+          $datepicker.datepicker("setDate", desiredDate);
+          if ( typeof onSeekCompleteCallBack === "function")
+            onSeekCompleteCallBack();
+        });
+      }
+    } else {
+      // Just seek to the time
+      var closestDesiredFrame = timelapse.findExactOrClosestCaptureTime(desiredDate.toTimeString().substr(0, 5));
+      timelapse.seekToFrame(closestDesiredFrame);
+      if ( typeof onSeekCompleteCallBack === "function")
+        onSeekCompleteCallBack();
     }
   } else {
-    // Just seek to the time
-    var closestDesiredFrame = timelapse.findExactOrClosestCaptureTime(desiredDate.toTimeString().substr(0, 5));
-    timelapse.seekToFrame(closestDesiredFrame);
     if ( typeof onSeekCompleteCallBack === "function")
       onSeekCompleteCallBack();
   }
@@ -112,17 +117,19 @@ function seekTimeMachine(currentDateInSecs, onSeekCompleteCallBack) {
 
 function getCurrentTimeMachineDateInSecs() {
   var currentCaptureTime = timelapse.getCurrentCaptureTime().split(" ");
-  var currentDateStr = currentCaptureTime[0].split("/");
-  var currentTimeStr = currentCaptureTime[1].split(":");
-  var month = parseInt(currentDateStr[0]);
-  var day = parseInt(currentDateStr[1]);
-  var year = parseInt(currentDateStr[2]);
-  var hour = parseInt(currentTimeStr[0] == 12 ? 0 : currentTimeStr[0]);
-  var min = parseInt(currentTimeStr[1]);
-  if (currentCaptureTime[2] == "PM")
-    hour += 12;
-  var currentDate = new Date(year, month - 1, day, hour, min);
-  return currentDate.getTime() / 1000;
+  if (currentCaptureTime) {
+    var currentDateStr = currentCaptureTime[0].split("/");
+    var currentTimeStr = currentCaptureTime[1].split(":");
+    var month = parseInt(currentDateStr[0]);
+    var day = parseInt(currentDateStr[1]);
+    var year = parseInt(currentDateStr[2]);
+    var hour = parseInt(currentTimeStr[0] == 12 ? 0 : currentTimeStr[0]);
+    var min = parseInt(currentTimeStr[1]);
+    if (currentCaptureTime[2] == "PM")
+      hour += 12;
+    var currentDate = new Date(year, month - 1, day, hour, min);
+    return currentDate.getTime() / 1000;
+  }
 }
 
 function highlightDays(date) {
@@ -169,6 +176,8 @@ function removeTimeMachineTimeChangeListener() {
 }
 
 function addTimeLineSliderListeners() {
+  clearTimeout(setChartCursorTimer);
+  setChartCursorTimer = null;
   $("#Tslider1").mousedown(function() {
     fastestSetChartCursorTime = fastestSetChartCursorTime_fast;
     setChartCursorToCurrentTime();
