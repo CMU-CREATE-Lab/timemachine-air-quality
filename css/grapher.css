@@ -16,7 +16,7 @@
   height: 51px;
   width: auto;
   background: white;
-  z-index: 49;
+  z-index: 1;
   border-bottom: 1px solid black;
 }
 
@@ -31,7 +31,7 @@
   right: 276px;
   height: 37px;
   border: 1px solid black;
-  z-index: 50;
+  z-index: 2;
 }
 
 .chart {
