@@ -148,7 +148,7 @@ function selectDay(dateText, dateElem) {
   var date = $.datepicker.formatDate('yy-mm-dd', new Date(dateText));
   var path = json_breathecam.datasets[date];
   if ( typeof (timelapse) !== "undefined" && timelapse && path) {
-    timelapse.loadTimelapse(path, null, null, true, onCalendarDateChange);
+    timelapse.loadTimelapse(path, null, null, true, null, onCalendarDateChange);
   }
 }
 
